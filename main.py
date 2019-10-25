@@ -3,6 +3,10 @@ import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
+import urllib.parse
+import urllib.request
+import json
+
 
 
 class STYLE:
@@ -20,7 +24,7 @@ class PREF:
     LINK = "<a href=\"{0}\">{0}</a>"
     LINK_NAME = "<a href=\"{0}\">{1}</a>"
     ABOUT = "Abel Stand Generator is a replica of {}.<br><br>The project is hosted on GitHub at {}".format(LINK.format(REFERENCE_URL), LINK.format(GITHUB_URL))
-    ITUNES_URL = "http://itunes.apple.com/search?term={}"
+    ITUNES_URL = "http://itunes.apple.com/search?{}"
 
 
 class MainWidget(QMainWindow):
@@ -30,6 +34,9 @@ class MainWidget(QMainWindow):
     
     def init(self):
         self.initUI()
+        
+        self.btnGenName.clicked.connect(self.generateName)
+        self.btnGenStand.clicked.connect(self.generateStand)
    
     def initUI(self):
         self.setWindowTitle(PREF.NAME)
@@ -88,6 +95,25 @@ class MainWidget(QMainWindow):
         VGeneralLayout.addLayout(HAbilityLinkLayout)
         VGeneralLayout.addWidget(self.outputStand)
         self.cw.setLayout(VGeneralLayout)
+    
+    def generateName(self):
+        lUrl = PREF.ITUNES_URL.format(urllib.parse.urlencode({"term" : self.inputName.text()}))
+        lResults = json.loads(urllib.request.urlopen(lUrl).read().decode())
+        self.handleItunesResults(lResults)
+    
+    def handleItunesResults(self, results):
+        print(results)
+        if results["resultCount"] == 0:
+            # TODO: handle no results
+            return
+        lNames = []
+        for lItem in results["results"]:
+            lNames.append(lItem["trackCensoredName"])
+        print(lNames)
+        sys.stdout.flush()
+    
+    def generateStand(self):
+        pass
 
 
 def main():
