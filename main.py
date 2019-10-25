@@ -6,7 +6,7 @@ from PyQt5.QtCore import *
 import urllib.parse
 import urllib.request
 import json
-
+import random
 
 
 class STYLE:
@@ -37,6 +37,9 @@ class MainWidget(QMainWindow):
         
         self.btnGenName.clicked.connect(self.generateName)
         self.btnGenStand.clicked.connect(self.generateStand)
+        
+        self.curNames = []
+        self.curBandName = []
    
     def initUI(self):
         self.setWindowTitle(PREF.NAME)
@@ -97,20 +100,30 @@ class MainWidget(QMainWindow):
         self.cw.setLayout(VGeneralLayout)
     
     def generateName(self):
-        lUrl = PREF.ITUNES_URL.format(urllib.parse.urlencode({"term" : self.inputName.text()}))
-        lResults = json.loads(urllib.request.urlopen(lUrl).read().decode())
-        self.handleItunesResults(lResults)
+        if self.curBandName != self.inputName.text():
+            self.curBandName = self.inputName.text()
+            lUrl = PREF.ITUNES_URL.format(urllib.parse.urlencode({"term" : self.curBandName}))
+            lResults = json.loads(urllib.request.urlopen(lUrl).read().decode())
+            self.curNames = self.handleItunesResults(lResults)
+        if len(self.curNames) == 0:
+            QMessageBox.warning(self, "Error", "Search was unsuccessful, try again")
+        else:
+            self.curName = random.choice(self.curNames)
+            self.outputName.setText(self.curName)
     
     def handleItunesResults(self, results):
-        print(results)
-        if results["resultCount"] == 0:
-            # TODO: handle no results
-            return
+        #if results["resultCount"] == 0:
+        #    # TODO: handle no results
+        #    return
         lNames = []
         for lItem in results["results"]:
-            lNames.append(lItem["trackCensoredName"])
-        print(lNames)
-        sys.stdout.flush()
+            lCurName = lItem["trackCensoredName"]
+            if "(" in lCurName:
+                lCurName = lCurName[:lCurName.find("(")]
+            if lCurName == "Intro":  # ?
+                continue
+            lNames.append(lCurName)
+        return lNames
     
     def generateStand(self):
         pass
